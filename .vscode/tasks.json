@@ -1,0 +1,35 @@
+{
+    "version": "2.0.0",
+    "options": {
+        "shell": {
+            "executable": "C:\\msys64\\usr\\bin\\bash.exe",
+            "args": [
+                "--login",
+                "-c"
+            ]
+        },
+        "env": {
+            "CHERE_INVOKING": "1",
+            "MSYSTEM": "UCRT64",
+            "PATH": "C:\\msys64\\ucrt64\\bin;C:\\msys64\\usr\\bin;${env:PATH}"
+        }
+    },
+    "tasks": [
+        {
+            "label": "Build and Run",
+            "type": "shell",
+            "command": "make all && ./gb.exe",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        }
+    ]
+}

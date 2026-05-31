@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2026 David Jolly <jolly.a.david@gmail.com>
+# SPDX-License-Identifier: MIT
+
+image: archlinux
+packages:
+  - clang
+  - sdl3
+sources:
+  - https://git.sr.ht/~dajolly/gb
+environment:
+  BUILD_SUBMITTER: git.sr.ht
+tasks:
+  - build: |
+      cd gb && make clean && make
+triggers:
+  - action: email
+    condition: failure
+    to: David Jolly <jolly.a.david@gmail.com>

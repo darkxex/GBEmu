@@ -1,0 +1,50 @@
+.\" SPDX-FileCopyrightText: 2026 David Jolly <jolly.a.david@gmail.com>
+.\" SPDX-License-Identifier: MIT
+
+.TH GB 1 "2026" "GB 0.2" "User Commands"
+.SH NAME
+gb \- GameBoy Emulator
+
+.SH SYNOPSIS
+.B gb
+[\fIoptions\fR] \fI[file]\fR
+.TP
+\fB\-f\fR, \fB\-\-fullscreen\fR
+Set window fullscreen
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Show help information
+.TP
+\fB\-p\fR, \fB\-\-palette\fR
+Set window palette
+.TP
+\fB\-s\fR, \fB\-\-scale\fR
+Set window scale
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Show version information
+
+.SH EXAMPLES
+.TP
+\fBgb \fIrom.gb\fR
+Launch with a ROM file
+.TP
+\fBgb -f \fIrom.gb\fR
+Launch with a fullscreen window
+.TP
+\fBgb -p \fI<id>\fR \fIrom.gb\fR
+Launch with a palette
+.TP
+\fBgb -s \fI<n>\fR \fIrom.gb\fR
+Launch with a scaled window
+
+.SH AUTHORS
+David Jolly <jolly.a.david@gmail.com>
+
+.SH REPORTING BUGS
+Report bugs to <jolly.a.david@gmail.com>
+
+.SH COPYRIGHT
+Copyright (c) 2026 David Jolly
+
+Released under the MIT License
