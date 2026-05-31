@@ -9,12 +9,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char *DESCRIPTION[] = { "Set window fullscreen", "Show help information", "Set window palette", "Set window scale",
+static const char *DESCRIPTION[] = { "Set window fullscreen", "Show help information", "Set window scale",
                                      "Show version information" };
 
 static const struct option FLAG[] = { { "fullscreen", no_argument, nullptr, 'f' },    { "help", no_argument, nullptr, 'h' },
-                                      { "palette", required_argument, nullptr, 'p' }, { "scale", required_argument, nullptr, 's' },
-                                      { "version", no_argument, nullptr, 'v' },       { nullptr, 0, nullptr, 0 } };
+                                      { "scale", required_argument, nullptr, 's' }, { "version", no_argument, nullptr, 'v' },
+                                      { nullptr, 0, nullptr, 0 } };
 
 static void usage(void) {
     uint32_t index = 0;
@@ -38,8 +38,7 @@ int main(int argc, char *argv[]) {
     gb_option_t option{};
     option.fullscreen = false;
     option.scale = 2;
-    option.palette = GB_PALETTE_NONE;
-    while ((index = getopt_long(argc, argv, "fhp:s:v", FLAG, nullptr)) != -1) {
+    while ((index = getopt_long(argc, argv, "fhs:v", FLAG, nullptr)) != -1) {
         switch (index) {
         case 'f':
             option.fullscreen = true;
@@ -47,9 +46,6 @@ int main(int argc, char *argv[]) {
         case 'h':
             usage();
             return GB_SUCCESS;
-        case 'p':
-            option.palette = static_cast<gb_palette_e>(strtoul(optarg, nullptr, 10));
-            break;
         case 's':
             option.scale = static_cast<uint8_t>(strtoul(optarg, nullptr, 10));
             break;

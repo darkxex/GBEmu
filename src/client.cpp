@@ -16,16 +16,13 @@ static const SDL_GamepadButton BUTTON[GB_BUTTON_MAX] = { SDL_GAMEPAD_BUTTON_EAST
                                                          SDL_GAMEPAD_BUTTON_DPAD_RIGHT, SDL_GAMEPAD_BUTTON_DPAD_LEFT,
                                                          SDL_GAMEPAD_BUTTON_DPAD_UP,    SDL_GAMEPAD_BUTTON_DPAD_DOWN };
 
-static const SDL_Scancode KEY[GB_BUTTON_MAX] = { SDL_SCANCODE_X,     SDL_SCANCODE_Z,    SDL_SCANCODE_C,  SDL_SCANCODE_SPACE,
+static const SDL_Scancode KEY[GB_BUTTON_MAX] = { SDL_SCANCODE_X,     SDL_SCANCODE_Z,    SDL_SCANCODE_SPACE,  SDL_SCANCODE_RETURN,
                                                  SDL_SCANCODE_RIGHT, SDL_SCANCODE_LEFT, SDL_SCANCODE_UP, SDL_SCANCODE_DOWN };
 
-static const uint16_t PALETTE[GB_PALETTE_MAX][GB_COLOR_MAX] = { { 0x6F7B, 0x4E73, 0x318C, 0x1084 },
-                                                                { 0x060F, 0x21EA, 0x2566, 0x1D05 },
-                                                                { 0x5338, 0x3651, 0x1D49, 0x14A5 },
-                                                                { 0x42C0, 0x3A60, 0x25A0, 0x1D20 } };
+static const uint16_t PALETTE[GB_COLOR_MAX] = { 0x6F7B, 0x4E73, 0x318C, 0x1084 };
 
 static struct {
-    gb_palette_e palette;
+    bool fullscreen;
     SDL_Cursor *cursor;
     SDL_Gamepad *gamepad;
     SDL_Renderer *renderer;
@@ -69,11 +66,11 @@ static gb_error_e gb_client_audio_sync(void) {
     return GB_SUCCESS;
 }
 
-static const gb_color_t (*gb_client_color(gb_palette_e palette)) [GB_VIDEO_HEIGHT][GB_VIDEO_WIDTH] {
+static const gb_color_t (*gb_client_color(void)) [GB_VIDEO_HEIGHT][GB_VIDEO_WIDTH] {
     static gb_color_t colors[GB_VIDEO_HEIGHT][GB_VIDEO_WIDTH] = {};
     for (uint8_t y = 0; y < GB_VIDEO_HEIGHT; ++y) {
         for (uint8_t x = 0; x < GB_VIDEO_WIDTH; ++x) {
-            colors[y][x].raw = PALETTE[palette][(*gb_video_color())[y][x]];
+            colors[y][x].raw = PALETTE[(*gb_video_color())[y][x]];
         }
     }
     return &colors;
@@ -144,8 +141,23 @@ static void gb_client_input_clear(void) {
     }
 }
 
+static void gb_client_video_fullscreen_toggle(void) {
+    client.fullscreen = !client.fullscreen;
+    if (client.fullscreen) {
+        SDL_HideCursor();
+        SDL_SetWindowFullscreen(client.window, true);
+    } else {
+        SDL_ShowCursor();
+        SDL_SetWindowFullscreen(client.window, false);
+    }
+}
+
 static void gb_client_keyboard_sync(const SDL_KeyboardEvent *const key) {
     if (!key->repeat) {
+        if (key->down && (key->scancode == SDL_SCANCODE_RETURN) && (key->mod & SDL_KMOD_ALT)) {
+            gb_client_video_fullscreen_toggle();
+            return;
+        }
         for (uint8_t index = 0; index < GB_BUTTON_MAX; ++index) {
             if (key->scancode == KEY[index]) {
                 (*gb_input_button())[index] = key->down;
@@ -159,15 +171,12 @@ static gb_error_e gb_client_video_create(const gb_option_t *const option) {
     if ((option->scale < GB_CLIENT_SCALE_MIN) || (option->scale > GB_CLIENT_SCALE_MAX)) {
         return GB_ERROR("Unsupported window scale: %u", option->scale);
     }
-    if (option->palette >= GB_PALETTE_MAX) {
-        return GB_ERROR("Unsupported window palette: %u", option->palette);
-    }
-    client.palette = option->palette;
+    client.fullscreen = option->fullscreen;
     if (!SDL_CreateWindowAndRenderer(gb_cartridge_title(), GB_VIDEO_WIDTH * option->scale, GB_VIDEO_HEIGHT * option->scale,
                                      SDL_WINDOW_RESIZABLE, &client.window, &client.renderer)) {
         return GB_ERROR("SDL_CreateWindowAndRenderer failed: %s", SDL_GetError());
     }
-    if (!SDL_SetRenderLogicalPresentation(client.renderer, GB_VIDEO_WIDTH, GB_VIDEO_HEIGHT, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE)) {
+    if (!SDL_SetRenderLogicalPresentation(client.renderer, GB_VIDEO_WIDTH, GB_VIDEO_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX)) {
         return GB_ERROR("SDL_SetRenderLogicalPresentation failed: %s", SDL_GetError());
     }
     if (!SDL_SetRenderDrawColor(client.renderer, 0, 0, 0, 0)) {
@@ -183,19 +192,18 @@ static gb_error_e gb_client_video_create(const gb_option_t *const option) {
     if (!SDL_SetTextureScaleMode(client.texture, SDL_SCALEMODE_NEAREST)) {
         return GB_ERROR("SDL_SetTextureScaleMode failed: %s", SDL_GetError());
     }
-    if (option->fullscreen) {
+    if (!(client.cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_CROSSHAIR))) {
+        return GB_ERROR("SDL_CreateSystemCursor failed: %s", SDL_GetError());
+    }
+    if (!SDL_SetCursor(client.cursor)) {
+        return GB_ERROR("SDL_SetCursor failed: %s", SDL_GetError());
+    }
+    if (client.fullscreen) {
         if (!SDL_HideCursor()) {
             return GB_ERROR("SDL_HideCursor failed: %s", SDL_GetError());
         }
         if (!SDL_SetWindowFullscreen(client.window, true)) {
             return GB_ERROR("SDL_SetWindowFullscreen failed: %s", SDL_GetError());
-        }
-    } else {
-        if (!(client.cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_CROSSHAIR))) {
-            return GB_ERROR("SDL_CreateSystemCursor failed: %s", SDL_GetError());
-        }
-        if (!SDL_SetCursor(client.cursor)) {
-            return GB_ERROR("SDL_SetCursor failed: %s", SDL_GetError());
         }
     }
     return GB_SUCCESS;
@@ -217,7 +225,7 @@ static void gb_client_video_destroy(void) {
 }
 
 static gb_error_e gb_client_video_sync(void) {
-    if (!SDL_UpdateTexture(client.texture, nullptr, gb_client_color(client.palette), GB_VIDEO_WIDTH * sizeof(uint16_t))) {
+    if (!SDL_UpdateTexture(client.texture, nullptr, gb_client_color(), GB_VIDEO_WIDTH * sizeof(uint16_t))) {
         return GB_ERROR("SDL_UpdateTexture failed: %s", SDL_GetError());
     }
     if (!SDL_RenderClear(client.renderer)) {

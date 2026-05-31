@@ -35,7 +35,6 @@ Usage: gb [options] [file]
 Options:
    -f, --fullscreen  Set window fullscreen
    -h, --help        Show help information
-   -p, --palette     Set window palette
    -s, --scale       Set window scale
    -v, --version     Show version information
 ```
@@ -45,8 +44,6 @@ Options:
 gb rom.gb
 # Launch with a fullscreen window
 gb -f rom.gb
-# Launch with a palette (see Palettes for valid IDs)
-gb -p <id> rom.gb
 # Launch with a scaled window
 gb -s <n> rom.gb
 ```
@@ -58,7 +55,7 @@ gb -s <n> rom.gb
 |A      |X          |A         |
 |B      |Z          |B         |
 |Select |C          |Back      |
-|Start  |Space      |Start     |
+|Start  |Return     |Start     |
 |Right  |Right-Arrow|Right-Dpad|
 |Left   |Left-Arrow |Left-Dpad |
 |Up     |Up-Arrow   |Up-Dpad   |
@@ -73,15 +70,6 @@ gb -s <n> rom.gb
 |5-6  |[MBC2](https://gbdev.io/pandocs/MBC2.html) |256KB ROM/512B RAM  |
 |15-19|[MBC3](https://gbdev.io/pandocs/MBC3.html) |2MB ROM/32KB RAM/RTC|
 |25-30|[MBC5](https://gbdev.io/pandocs/MBC5.html) |8MB ROM/128KB RAM   |
-
-## Palettes
-
-|Id|Color                             |Description             |
-|:-|:---------------------------------|:-----------------------|
-|0 |![None](docs/palette/none.png)    |None                    |
-|1 |![DMG](docs/palette/dmg.png)      |GameBoy (DMG-01)        |
-|2 |![Pocket](docs/palette/pocket.png)|GameBoy Pocket (MGB-001)|
-|3 |![Light](docs/palette/light.png)  |GameBoy Light (MGB-101) |
 
 ## License
 
