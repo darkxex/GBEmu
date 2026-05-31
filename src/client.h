@@ -14,12 +14,12 @@
 #define GB_CLIENT_VSYNC false
 
 typedef union {
-    uint16_t raw;
+    uint32_t raw;
     struct {
-        uint16_t red : 5;
-        uint16_t green : 5;
-        uint16_t blue : 5;
-        uint16_t : 1;
+        uint32_t blue : 8;
+        uint32_t green : 8;
+        uint32_t red : 8;
+        uint32_t : 8;
     };
 } gb_color_t;
 

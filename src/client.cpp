@@ -10,6 +10,8 @@
 #include "video.h"
 #include <SDL3/SDL.h>
 #include <string.h>
+#include <cstdio>
+#include <stdlib.h>
 
 static const SDL_GamepadButton BUTTON[GB_BUTTON_MAX] = { SDL_GAMEPAD_BUTTON_EAST,       SDL_GAMEPAD_BUTTON_SOUTH,
                                                          SDL_GAMEPAD_BUTTON_BACK,       SDL_GAMEPAD_BUTTON_START,
@@ -19,11 +21,29 @@ static const SDL_GamepadButton BUTTON[GB_BUTTON_MAX] = { SDL_GAMEPAD_BUTTON_EAST
 static const SDL_Scancode KEY[GB_BUTTON_MAX] = { SDL_SCANCODE_X,     SDL_SCANCODE_Z,    SDL_SCANCODE_SPACE,  SDL_SCANCODE_RETURN,
                                                  SDL_SCANCODE_RIGHT, SDL_SCANCODE_LEFT, SDL_SCANCODE_UP, SDL_SCANCODE_DOWN };
 
-static const uint16_t PALETTE[GB_COLOR_MAX] = { 0x6F7B, 0x4E73, 0x318C, 0x1084 };
+static uint32_t PALETTE[GB_COLOR_MAX] = { 0x9bbc0f, 0x8bac0f, 0x306230, 0x0f380f };
+
+static void gb_client_palette_load(void) {
+    FILE *file = fopen("palette.hex", "r");
+    if (file) {
+        uint32_t index = GB_COLOR_MAX - 1;
+        char line[16] = {};
+        while (fgets(line, sizeof(line), file)) {
+            if (line[0] != '\0' && line[0] != '\n') {
+                PALETTE[index] = static_cast<uint32_t>(strtol(line, nullptr, 16));
+                if (index > 0) {
+                    --index;
+                } else {
+                    break;
+                }
+            }
+        }
+        fclose(file);
+    }
+}
 
 static struct {
     bool fullscreen;
-    SDL_Cursor *cursor;
     SDL_Gamepad *gamepad;
     SDL_Renderer *renderer;
     SDL_AudioStream *stream;
@@ -186,17 +206,11 @@ static gb_error_e gb_client_video_create(const gb_option_t *const option) {
         return GB_ERROR("SDL_SetRenderVSync failed: %s", SDL_GetError());
     }
     if (!(client.texture =
-              SDL_CreateTexture(client.renderer, SDL_PIXELFORMAT_XBGR1555, SDL_TEXTUREACCESS_STREAMING, GB_VIDEO_WIDTH, GB_VIDEO_HEIGHT))) {
+              SDL_CreateTexture(client.renderer, SDL_PIXELFORMAT_XRGB8888, SDL_TEXTUREACCESS_STREAMING, GB_VIDEO_WIDTH, GB_VIDEO_HEIGHT))) {
         return GB_ERROR("SDL_CreateTexture failed: %s", SDL_GetError());
     }
     if (!SDL_SetTextureScaleMode(client.texture, SDL_SCALEMODE_NEAREST)) {
         return GB_ERROR("SDL_SetTextureScaleMode failed: %s", SDL_GetError());
-    }
-    if (!(client.cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_CROSSHAIR))) {
-        return GB_ERROR("SDL_CreateSystemCursor failed: %s", SDL_GetError());
-    }
-    if (!SDL_SetCursor(client.cursor)) {
-        return GB_ERROR("SDL_SetCursor failed: %s", SDL_GetError());
     }
     if (client.fullscreen) {
         if (!SDL_HideCursor()) {
@@ -210,9 +224,6 @@ static gb_error_e gb_client_video_create(const gb_option_t *const option) {
 }
 
 static void gb_client_video_destroy(void) {
-    if (client.cursor) {
-        SDL_DestroyCursor(client.cursor);
-    }
     if (client.texture) {
         SDL_DestroyTexture(client.texture);
     }
@@ -225,7 +236,7 @@ static void gb_client_video_destroy(void) {
 }
 
 static gb_error_e gb_client_video_sync(void) {
-    if (!SDL_UpdateTexture(client.texture, nullptr, gb_client_color(), GB_VIDEO_WIDTH * sizeof(uint16_t))) {
+    if (!SDL_UpdateTexture(client.texture, nullptr, gb_client_color(), GB_VIDEO_WIDTH * sizeof(uint32_t))) {
         return GB_ERROR("SDL_UpdateTexture failed: %s", SDL_GetError());
     }
     if (!SDL_RenderClear(client.renderer)) {
@@ -242,6 +253,7 @@ static gb_error_e gb_client_video_sync(void) {
 
 gb_error_e gb_client_create(const gb_option_t *const option) {
     gb_error_e result = GB_SUCCESS;
+    gb_client_palette_load();
     memset(&client, 0, sizeof(client));
     if (!SDL_Init(SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_VIDEO)) {
         return GB_ERROR("SDL_Init failed: %s", SDL_GetError());
