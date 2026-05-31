@@ -54,7 +54,7 @@ gb -s <n> rom.gb
 |:------|:----------|:---------|
 |A      |X          |A         |
 |B      |Z          |B         |
-|Select |C          |Back      |
+|Select |Space      |Back      |
 |Start  |Return     |Start     |
 |Right  |Right-Arrow|Right-Dpad|
 |Left   |Left-Arrow |Left-Dpad |
